@@ -25,7 +25,7 @@ Deploy the Functions
 twilio serverless:deploy
 ```
 
-Note the serverless host it will look like `https://cedrics-joke-collection-<NUMBERS>-dev.twil.io/
+Note the serverless host it will look like `https://cedrics-joke-collection-[UNIQUE TO YOU NUMBERS]-dev.twil.io/
 
 Create a new Studio Flow, name it, and when presented with templates choose, **Import From JSON**. Paste the [Cedric's Studio Flow JSON](./studio/flow.json). Edit the host variable to be your host.
 
