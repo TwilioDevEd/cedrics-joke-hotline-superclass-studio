@@ -1,0 +1,358 @@
+{
+  "description": "A New Flow",
+  "states": [
+    {
+      "name": "Trigger",
+      "type": "trigger",
+      "transitions": [
+        {
+          "event": "incomingMessage"
+        },
+        {
+          "next": "configuration",
+          "event": "incomingCall"
+        },
+        {
+          "event": "incomingConversationMessage"
+        },
+        {
+          "event": "incomingRequest"
+        },
+        {
+          "event": "incomingParent"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "name": "Welcome",
+      "type": "say-play",
+      "transitions": [
+        {
+          "next": "menu",
+          "event": "audioComplete"
+        }
+      ],
+      "properties": {
+        "voice": "Polly.Brian",
+        "offset": {
+          "x": 120,
+          "y": 360
+        },
+        "loop": 1,
+        "say": "Greetings! Welcome to Cedric's Joke Hotline.",
+        "language": "en-GB"
+      }
+    },
+    {
+      "name": "menu",
+      "type": "gather-input-on-call",
+      "transitions": [
+        {
+          "next": "check_menu",
+          "event": "keypress"
+        },
+        {
+          "event": "speech"
+        },
+        {
+          "event": "timeout"
+        }
+      ],
+      "properties": {
+        "voice": "Polly.Brian",
+        "number_of_digits": 1,
+        "speech_timeout": "auto",
+        "offset": {
+          "x": 120,
+          "y": 550
+        },
+        "loop": 1,
+        "finish_on_key": "#",
+        "say": "Press 1 to submit a joke,\nPress 2 to rate the jokes that humans have submitted",
+        "language": "en-GB",
+        "stop_gather": true,
+        "gather_language": "en",
+        "profanity_filter": "true",
+        "timeout": 5
+      }
+    },
+    {
+      "name": "instructions",
+      "type": "say-play",
+      "transitions": [
+        {
+          "next": "record_voicemail_1",
+          "event": "audioComplete"
+        }
+      ],
+      "properties": {
+        "voice": "Polly.Brian",
+        "offset": {
+          "x": -90,
+          "y": 980
+        },
+        "loop": 1,
+        "say": "After the beep, please kindly leave your joke. I will process it for humor.",
+        "language": "en-GB"
+      }
+    },
+    {
+      "name": "record_voicemail_1",
+      "type": "record-voicemail",
+      "transitions": [
+        {
+          "event": "recordingComplete"
+        },
+        {
+          "event": "noAudio"
+        },
+        {
+          "event": "hangup"
+        }
+      ],
+      "properties": {
+        "transcribe": true,
+        "offset": {
+          "x": -90,
+          "y": 1270
+        },
+        "trim": "trim-silence",
+        "transcription_callback_url": "https://{{flow.variables.host}}/jokes/save-submission",
+        "play_beep": "true",
+        "timeout": 5,
+        "max_length": 600
+      }
+    },
+    {
+      "name": "check_menu",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "event": "noMatch"
+        },
+        {
+          "next": "instructions",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "If value equal_to 1",
+              "arguments": ["{{widgets.menu.Digits}}"],
+              "type": "equal_to",
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "next": "run_function_next_joke",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "If value equal_to 2",
+              "arguments": ["{{widgets.menu.Digits}}"],
+              "type": "equal_to",
+              "value": "2"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.menu.Digits}}",
+        "offset": {
+          "x": 120,
+          "y": 750
+        }
+      }
+    },
+    {
+      "name": "run_function_next_joke",
+      "type": "run-function",
+      "transitions": [
+        {
+          "next": "check_joke",
+          "event": "success"
+        },
+        {
+          "event": "fail"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 480,
+          "y": 990
+        },
+        "parameters": [
+          {
+            "value": "{{flow.variables.lastHeardJokeId}}",
+            "key": "lastHeardJokeId"
+          }
+        ],
+        "url": "https://{{flow.variables.host}}.twil.io/jokes/next"
+      }
+    },
+    {
+      "name": "update_variables",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "run_function_next_joke",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "value": "{{widgets.run_function_next_joke.parsed.ID}}",
+            "key": "lastHeardJokeId"
+          }
+        ],
+        "offset": {
+          "x": 480,
+          "y": 2050
+        }
+      }
+    },
+    {
+      "name": "prompt_joke_rating",
+      "type": "gather-input-on-call",
+      "transitions": [
+        {
+          "next": "run_function_rating",
+          "event": "keypress"
+        },
+        {
+          "event": "speech"
+        },
+        {
+          "event": "timeout"
+        }
+      ],
+      "properties": {
+        "voice": "Polly.Brian",
+        "number_of_digits": 1,
+        "speech_timeout": "auto",
+        "offset": {
+          "x": 480,
+          "y": 1490
+        },
+        "loop": 1,
+        "finish_on_key": "#",
+        "say": "On a scale of 1 to 5 how do you rate this joke?\n\n{{widgets.run_function_next_joke.parsed.Joke}} \n\n{{widgets.run_function_next_joke.parsed.Explanation}}",
+        "language": "en-GB",
+        "stop_gather": true,
+        "gather_language": "en",
+        "profanity_filter": "true",
+        "timeout": 5
+      }
+    },
+    {
+      "name": "thats_all_folks",
+      "type": "say-play",
+      "transitions": [
+        {
+          "event": "audioComplete"
+        }
+      ],
+      "properties": {
+        "voice": "Polly.Brian",
+        "offset": {
+          "x": 1070,
+          "y": 1470
+        },
+        "loop": 1,
+        "say": "That's all folks",
+        "language": "en-GB"
+      }
+    },
+    {
+      "name": "run_function_rating",
+      "type": "run-function",
+      "transitions": [
+        {
+          "next": "update_variables",
+          "event": "success"
+        },
+        {
+          "event": "fail"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 480,
+          "y": 1760
+        },
+        "parameters": [
+          {
+            "value": "{{widgets.run_function_next_joke.parsed.ID}}",
+            "key": "JokeId"
+          },
+          {
+            "value": "{{widgets.prompt_joke_rating.Digits}}",
+            "key": "Rating"
+          }
+        ],
+        "url": "https://{{flow.variables.host}}/jokes/rate"
+      }
+    },
+    {
+      "name": "check_joke",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "prompt_joke_rating",
+          "event": "noMatch"
+        },
+        {
+          "next": "thats_all_folks",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "If value equal_to true",
+              "arguments": ["{{widgets.run_function_next_joke.parsed.end}}"],
+              "type": "equal_to",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.run_function_next_joke.parsed.end}}",
+        "offset": {
+          "x": 480,
+          "y": 1200
+        }
+      }
+    },
+    {
+      "name": "configuration",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "Welcome",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "value": "cedrics-joke-collection-5476-dev.twil.io",
+            "key": "host"
+          }
+        ],
+        "offset": {
+          "x": 120,
+          "y": 160
+        }
+      }
+    }
+  ],
+  "initial_state": "Trigger",
+  "flags": {
+    "allow_concurrent_calls": true
+  }
+}
