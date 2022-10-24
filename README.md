@@ -8,7 +8,7 @@ This application consists of a low code [Studio](https://twilio.com/serverless/s
 
 ## Getting Started
 
-Copy the [`.env.example`](.env.example) to .env and make it yours. The current database implementation uses Airtable and I've [recorded a video about the schema](https://www.loom.com/share/7294f414cf72469187093eafbf80e62c).
+Copy the [`.env.example`](.env.example) to .env and make it yours. The current database implementation uses Airtable and [Craig](https://twitter.com/craigsdennis) has [recorded a video about the schema](https://www.loom.com/share/7294f414cf72469187093eafbf80e62c).
 
 Download the [twilio CLI](https://twil.io/cli)
 
